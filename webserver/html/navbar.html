@@ -1,0 +1,64 @@
+<div class="navbar navbar-inverse navbar-fluid">
+    <div class="container-fluid">
+        <div class="navbar-header">
+
+            <a class="navbar-brand" href="/">Infomatics</a>
+        </div>
+        <center>
+            <div class="navbar-collapse " id="znavbar-main">
+                <ul class="nav navbar-nav">
+                    <li class=""><a href="/">Home</a>
+                    </li>
+                    {% if user is not None %}
+                    <li class=""><a href="/">My Buildings</a>
+                    </li>
+                    {% end %}
+                    <!--
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">Action</a>
+                            </li>
+                            <li><a href="#">Another action</a>
+                            </li>
+                            <li><a href="#">Something else here</a>
+                            </li>
+                            <li class="divider"></li>
+                            <li><a href="#">Separated link</a>
+                            </li>
+                            <li class="divider"></li>
+                            <li><a href="#">One more separated link</a>
+                            </li>
+                        </ul>
+                    </li>
+                  -->
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    {% if user is None %}
+                    <li>
+                        <a href="/plugin/login">Login</a>
+                    </li>
+                    {% else %}
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user }} <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">Action</a>
+                            </li>
+                            <li><a href="#">Another action</a>
+                            </li>
+                            <li><a href="#">Something else here</a>
+                            </li>
+                            <li class="divider"></li>
+                            <li><a href="#">Separated link</a>
+                            </li>
+                            <li class="divider"></li>
+                            <li><a href="#">One more separated link</a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% end %}
+                </ul>
+            </div>
+        </center>
+    </div>
+</div>

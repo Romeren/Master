@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+    {% if context["plugin"]["type"] == "text" %}
+        {{ context["plugin"]["content"] }}
+    {% elif context["plugin"]["type"] == "rest"%}
+        {% module Rest_Service_Module( context["plugin"]["content"]) %}
+    {% elif context["plugin"]["type"] == "websocket" %}
+        {% module Websocket_Service_Module( context["plugin"]["content"]) %}
+    {% end %}
+{% end %}

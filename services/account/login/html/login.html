@@ -1,0 +1,21 @@
+<div class="panel panel-default">
+  <div class="panel-heading">Welcome to Informatics</div>
+  <div class="panel-body">
+    {% if context["hasError"] %}
+        <p>Ops... Thats not a valid username or password </p>
+    {% end %}
+    <form role="form" onSubmit="return loadRestService('#{{ context["location_js"] }}', '{{ context["address"] }}', requestType='POST', data={'username': $(&quot;input[name='username']&quot;)[0].value, 'password': $(&quot;input[name='password']&quot;)[0].value});">
+      <fieldset>
+          <div class="form-group">
+              <input type="text" class="form-control" name="username" placeholder="Username">
+          </div>
+          <div class="form-group">
+              <input type="password" class="form-control" name="password" placeholder="Password">
+          </div>
+        <!-- Change this to a button or input when using this as a form -->
+        <button type="submit" class="btn btn-success btn-block" value="login">Login</button>
+        <p>New Member? <a href="/webportal/accounts/register/" class="">Sign up</a></p>
+      </fieldset>
+    </form>
+  </div>
+</div>

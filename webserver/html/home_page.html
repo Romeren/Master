@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+    {% if context["loggedin"] %}
+        {% if context["about"]["type"] == "text" %}
+            {{ context["about"]["content"] }}
+        {% elif context["about"]["type"] == "rest"%}
+            {% module Rest_Service_Module(context["about"]["content"]) %}
+        {% elif context["about"]["type"] == "websocket" %}
+            {% module Websocket_Service_Module(context["about"]["content"]) %}
+        {% end %}
+    {% else %}
+    <div class="col-md-8">
+        {% if context["about"]["type"] == "text" %}
+            {{ context["about"]["content"] }}
+        {% elif context["about"]["type"] == "rest"%}
+            {% module Rest_Service_Module(context["about"]["content"]) %}
+        {% elif context["about"]["type"] == "websocket" %}
+            {% module Websocket_Service_Module(context["about"]["content"]) %}
+        {% end %}
+    </div>
+    <div class="col-md-4">
+        {% if context["signup"]["type"] == "text" %}
+            {{ context["signup"]["content"] }}
+        {% elif context["signup"]["type"] == "rest"%}
+            {% module Rest_Service_Module(context["signup"]["content"]) %}
+        {% elif context["signup"]["type"] == "websocket" %}
+            {% module Websocket_Service_Module(context["signup"]["content"]) %}
+        {% end %}
+    </div>
+    {% end %}
+{% end %}
