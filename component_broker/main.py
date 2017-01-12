@@ -141,9 +141,16 @@ def handle_request_config(message):
 
     # Checking if host host multiple plugins:
     candidate = port + 1
+    if "port" in message:
+        candidate = message["port"]
+
     for plugin in get_matching(plugins, "*/*/" + host):
         if(plugins[plugin].port == candidate):
-            candidate += 1
+            if "port" in message:
+                reply["message"] = "PORT allready in use!"
+                return reply
+            else:
+                candidate += 1
         else:
             break
 
@@ -182,7 +189,7 @@ def __build_topic(service_type, service_category, service_name, host_address):
 
 
 def __publish_event(topic, message):
-    publisher_socket.send("%s %s" % (topic, json.dumps(message)))
+    publisher_socket.send_string("%s %s" % (topic, json.dumps(message)))
 
 plugins = {}  # topic and wrapper class ---
 # topic = <service_type>/<service_category>/<service_name/<host_address>
@@ -199,7 +206,7 @@ publisher_socket.bind("tcp://*:%s" % publisherPort)
 
 while True:
     #  Wait for next request from client
-    message = server_socket.recv()
+    message = server_socket.recv_string()
     port = usedports[len(usedports) - 1]
     message = json.loads(message)
     reply = {"status": 400, "ERROR": "Invalid Message"}
@@ -219,4 +226,4 @@ while True:
          "host" in message):
         reply = handle_request_config(message)
 
-    server_socket.send(json.dumps(reply))
+    server_socket.send_string(json.dumps(reply))

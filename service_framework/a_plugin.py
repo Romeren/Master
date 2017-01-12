@@ -171,6 +171,29 @@ class RestHandler(web.RequestHandler):
         socket.close()
         return message
 
+    def find_plugin(self, service_type, service_name, service_category):
+        # request plugin at broker:
+        topic = self.__build_topic(service_type, service_category, service_name, "*")
+        clients = self.__get_matching(plugins, topic)
+        try:
+            service = clients.next()
+        except Exception:
+            return None
+        return service
+
+    def __build_topic(self,
+                      service_type,
+                      service_category,
+                      service_name,
+                      host_address):
+        topic = service_type + "/" + service_category + "/" + service_name + "/" + host_address  # NOQA
+        return topic
+
+    def __get_matching(self, dictionary, topic):
+        regex = fnmatch.translate(str(topic))
+        reObj = re.compile(regex)
+        return (key for key in dictionary if reObj.search(key))
+
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "http://localhost:8888")
         self.set_header('Access-Control-Allow-Credentials', 'true')
