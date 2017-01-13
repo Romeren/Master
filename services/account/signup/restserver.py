@@ -4,25 +4,18 @@ from service_framework.a_plugin import RestHandler as abstract_plugin  # NOQA
 from tornado import gen
 from tornado.web import asynchronous
 
-check_username_addr = None
-store_user_addr = None
-host_address = None
-
 
 class Plugin(abstract_plugin):
-    def initialize(self):
-        self.service_name = "account/signup"
 
-        global host_address
-        if host_address is None:
-            host_address = self.get_external_plugin_address(self.service_name,
-                                                            "rest")
+    def initialize(self, module):
+        self.module = module
+        self.service_name = "account/signup"
 
     def get(self):
         context = {}
         context["location_js"] = self.service_name.replace("/", "\\\/")
-        global host_address
-        context["address"] = host_address
+        
+        context["address"] = self.get_address()
 
         user = self.get_current_user()
         print(user)
@@ -37,8 +30,9 @@ class Plugin(abstract_plugin):
     def post(self):
         context = {}
         context["location_js"] = self.service_name.replace("/", "\\\/")
-        global host_address
-        context["address"] = host_address
+        
+        context["address"] = self.get_address()
+
         username = self.get_argument("username", "")
         password = self.get_argument("password", "")
         print("SIGNUP_INPUT", username, password)
@@ -49,11 +43,7 @@ class Plugin(abstract_plugin):
             return
 
         # check username does not exists
-        global check_username_addr
-        if check_username_addr is None:
-            check_username_addr = self.get_external_plugin_address("*/check_username",  # NOQA
-                                                                   "rest")
-            print("CHECKUSERADDR", check_username_addr)
+        check_username_addr = self.get_plugin_addr("account/basic/check_username")
 
         # check username:
         params = {'username': username}
@@ -70,11 +60,7 @@ class Plugin(abstract_plugin):
             return
 
         # store username and address
-        global store_user_addr
-        if store_user_addr is None:
-            store_user_addr = self.get_external_plugin_address("*/store_user",
-                                                               "rest")
-            print("STOREADDR", store_user_addr)
+        store_user_addr = self.get_plugin_addr("account/basic/store_user")
 
         params = {'username': username,
                   'password': password}
@@ -93,6 +79,17 @@ class Plugin(abstract_plugin):
             context["hasError"] = True
             self.render("html/signup.html", context=context)
             return
+
+    def get_address(self):
+        return self.get_plugin_addr(self.service_name, host=self.module.address)
+
+    def get_plugin_addr(self, service_name, service_type = "rest", service_category="plugin", host="*"):
+        info = self.find_plugin(service_type, service_category, service_name, host)
+        address = ""
+        if info is not None:
+            address = "http://" + info["hostname"] + ":" + info["port"] +"/" + info["service_name"]
+        return address
+
 
 config = {"service_name": "account/signup",
           "handler": Plugin,

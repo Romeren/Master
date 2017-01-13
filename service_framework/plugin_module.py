@@ -4,9 +4,14 @@ handles subscriping to server and sending heartbeats.
 """
 
 import atexit
+import fnmatch
 import json
+import re
+import time
 import signal
 from tornado import web, ioloop  # NOQA
+from threading import Event
+from threading import Thread
 import zmq
 
 
@@ -21,10 +26,27 @@ class Plugin_module(object):
         self.pluginPort = None
         self.service_configurations = service_configurations
         self.settings = settings
+        self.stop_event = Event()
+        self.plugins = None
 
+                # Add exit handler:
+        atexit.register(self.termination_handler)
+        # add interrupt handler
+        # signal.signal(signal.SIGBREAK, self.exit_handler)
+        # signal.signal(signal.SIGABRT, self.exit_handler)
+        # signal.signal(signal.SIGILL, self.exit_handler)
+        signal.signal(signal.SIGINT, self.exit_handler)
+        # signal.signal(signal.SIGSEGV, self.exit_handler)
+        # signal.signal(signal.SIGTERM, self.exit_handler)
+        
         app = self.configure_module()
         
-        
+        subscriber = Thread(target=self.broker_event_subscriber,
+                          args=(self.address, self.port+1, self.stop_event))
+        subscriber.start()
+        # TEST:
+        # self.broker_event_subscriber(self.address, self.port +1, self.stop_event)
+
 
         self.start_webserver(app)
 
@@ -48,11 +70,6 @@ class Plugin_module(object):
         # Subscribe module to plugin broker:
         self.subscribe_to_broker()
 
-        # Add exit handler:
-        atexit.register(self.termination_handler)
-        # add interrupt handler
-        signal.signal(signal.SIGINT, self.exit_handler)
-
         # configure tornado server for handling websockets:
         if(self.pluginPort is None):
             print("plugin port not configured!")
@@ -75,6 +92,29 @@ class Plugin_module(object):
         print("Connecting to server...")
         self.socket = context.socket(zmq.REQ)
         self.socket.connect("tcp://" + self.address + ":" + str(self.port))
+
+    def get_plugins_from_broker(self,
+                               service_type="*",
+                               service_category="*",
+                               service_name="*",
+                               host_address="*"):
+        request = {"get_service_list": {"service_type": service_type,
+                                   "service_category": service_category,
+                                   "service_name": service_name,
+                                   "host_address": host_address}}
+        
+        self.socket.send_string(json.dumps(request))
+
+        message = self.socket.recv_string()
+        message = json.loads(message)
+        if(message["status"] == 200):
+            # print("Received reply ", message)
+            return message["services"]
+        else:
+            print(message)
+            self.is_active = False
+            exit()
+
 
     def request_config(self):
         request = {
@@ -143,40 +183,91 @@ class Plugin_module(object):
 # --------------------------------------------------------
 # Publish subscripe functions 
 # --------------------------------------------------------
-    def broker_event_subscriber(self, broker_address, broker_port):
+    def get_plugin(self, service_type, service_category, service_name, host_address):
+        # request plugin at broker:
+        topic = self.__build_topic(service_type, service_category, service_name, host_address)
+        clients = self.__get_matching(self.__get_plugins(), topic)
+
+        elm = None
+        for key in clients:
+            elm = self.__get_plugins()[key]
+            break
+
+        return elm
+        
+
+    def broker_event_subscriber(self, broker_address, broker_port, stop_event):
+        print("SUBSCRIBER HAVE BEEN STARTED!")
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         bk_url = "tcp://" + broker_address + ":" + str(broker_port)
         socket.connect(bk_url)
 
-        topics = ["service/removed", "service/added"]
+        topics = []
+        for config in self.service_configurations:
+            topic = self.__build_topic(config["service_type"],
+                                       config["service_category"],
+                                       config["service_name"],
+                                       self.address) 
+            topics.append(topic)
+
+
+            self.__get_plugins()[topic] = self.get_plugins_from_broker(config["service_type"],
+                                                                      config["service_category"],
+                                                                      config["service_name"],
+                                                                      self.address)[0]
+
+            if "dependencies" in config:
+                for dep in config["dependencies"]:
+                    topics.append(self.__build_topic(dep["service_type"],
+                                                     dep["service_category"],
+                                                     dep["service_name"],
+                                                     "*"))
+
+                    for service in  self.get_plugins_from_broker(dep["service_type"],
+                                                                 dep["service_category"],
+                                                                 dep["service_name"],
+                                                                 "*"):
+                        topic = self.__build_topic_from_request(service)
+                        topics.append(topic)
+                        self.__get_plugins()[topic] = service
+
+        topics = list(set(topics)) # make sure all are unique!
+
         for topic in topics:
             socket.setsockopt_string(zmq.SUBSCRIBE, topic)
 
-        while isRunning:
-            content = socket.recv().split(" ", 1)
-            info = json.loads(content[1])
-            if content[0] == topics[0]:
-                topic = __build_topic_from_request(info)
+        while (not stop_event.is_set()):
+            [topic, content] = socket.recv_multipart()
+
+            info = json.loads(content.decode("utf-8"))
+
+            if info["event"] == "remove":
                 print("REMOVED:", topic)
-                plugins.pop(topic, None)
+                self.__get_plugins().pop(topic, None)
             else:
-                topic = __build_topic_from_request(info)
-                print("ADDED:", topic)
-                plugins[topic] = info
+                print(info["event"], topic)
+                self.__get_plugins()[topic] = info["service"]
+
+        print("SUBSCRIBER HAVE BEEN TERMINATED!")
 
 
 # --------------------------------------------------------
 # Utiliy functions
 # --------------------------------------------------------
+    def __get_plugins(self):
+        if self.plugins is None:
+            self.plugins = {}
+        return self.plugins
+
     def __make_path_config(self, config):
         if "path" in config and "handler_settings" in config:
-            config["handler_settings"]["module"] = self
+            # config["handler_settings"]["module"] = self
             return (config["path"], config["handler"], config["handler_settings"])
         elif "path" in config:
             return (config["path"], config["handler"], {"module": self})
         elif "handler_settings" in config:
-            config["handler_settings"]["module"] = self
+            #config["handler_settings"]["module"] = self
             return (self.__make_fall_back_path(config["service_name"]), config["handler"], config["handler_settings"])
         else:
             return (self.__make_fall_back_path(config["service_name"]), config["handler"], {"module": self})
@@ -198,7 +289,7 @@ class Plugin_module(object):
         if("service_category" in request):
             service_category = request["service_category"]
 
-        return __build_topic(service_type,
+        return self.__build_topic(service_type,
                          service_category,
                          service_name,
                          host_address)
@@ -211,19 +302,26 @@ class Plugin_module(object):
         topic = service_type + "/" + service_category + "/" + service_name + "/" + host_address  # NOQA
         return topic
 
-
+    def __get_matching(self, dictionary, topic):
+        regex = fnmatch.translate(str(topic))
+        reObj = re.compile(regex)
+        return (key for key in dictionary if reObj.search(key))
 # --------------------------------------------------------
 # Exit and termination handlers:
 # --------------------------------------------------------
     def termination_handler(self):
         print("Terminating...")
         self.unsubscriped_from_broker()
+        self.stop_event.set()
+        time.sleep(1)
         if(self.is_exiting):
             ioloop.IOLoop.instance().stop()
             self.is_exiting = False
 
     def exit_handler(self, signal, frame):
         print("INTERRUPTED! -terminating")
+        self.stop_event.set()
+        time.sleep(1)
         if(self.is_exiting):
             ioloop.IOLoop.instance().stop()
             self.is_exiting = False

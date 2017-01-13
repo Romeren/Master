@@ -4,6 +4,7 @@ from service_framework.a_plugin import RestHandler as abstract_plugin  # NOQA
 
 
 class Plugin(abstract_plugin):
+    
     def initialize(self, module):
         self.module = module
         # urls and command attachment:
@@ -77,8 +78,9 @@ class Plugin(abstract_plugin):
             context["user"] = None
         return context
 
-    def get_plugin_formed(self, service_name, service_category):
-        message = self.find_plugin(service_name, service_category)
+    def get_plugin_formed(self, service_name, service_category, service_type = "*"):
+        message = self.find_plugin(service_type, service_category, service_name)
+        print("get_plugin", message)
         if message is None:
             return {"content": "No module found", "type": "text"}
         else:
@@ -90,11 +92,12 @@ config = {"service_name": "home",
           "service_type": "rest",
           "service_category": "plugin",
           "path": r"^(?!\/java).*$",
+          "dependencies":[{
+                "service_type": "*",
+                "service_category": "*",
+                "service_name": "*",
+                "host_address": "*"
+            }
+          ]
           }
 
-
-
-
-# thread = Thread(target=broker_event_subscriber,
-#                args=("localhost", 5556))
-# thread.start()

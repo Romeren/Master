@@ -4,11 +4,10 @@
 # from plugin_module import Plugin_module
 import json
 from tornado import gen
-import tornado.httpclient
+from tornado import httpclient
 from tornado import web
 from tornado import websocket
 import urllib
-import zmq
 cl = []
 
 
@@ -18,31 +17,6 @@ class SocketHandler(websocket.WebSocketHandler):
         super(websocket.WebSocketHandler, self).__init__(application,
                                                          request,
                                                          **kwargs)
-
-    def load_external_plugin(self,
-                             service_type="*",
-                             service_name="*",
-                             host_address="*"):
-        broker_address = "localhost"
-        broker_port = 5555
-        # request plugin at broker:
-        context = zmq.Context()
-        socket = context.socket(zmq.REQ)
-        bk_url = "tcp://" + broker_address + ":" + str(broker_port)
-        socket.connect(bk_url)
-
-        socket.send(json.dumps({"get_service": {
-            "service_type": service_type,
-            "service_name": service_name,
-            "host_address": host_address
-            }
-            }))
-
-        message = socket.recv()
-        message = json.loads(message)
-        socket.close()
-        print(message)
-        return message
 
     def register_event(self, on_message, function):
         if(hasattr(self, "messages_for_listening") is False):
@@ -107,6 +81,9 @@ class SocketHandler(websocket.WebSocketHandler):
 
 
 class RestHandler(web.RequestHandler):
+    def initialize(self, module):
+        self.module = module
+
     def get_current_user(self):
         return self.get_secure_cookie("user")
 
@@ -134,65 +111,12 @@ class RestHandler(web.RequestHandler):
                             url,
                             headers=header)
 
-    def get_external_plugin_address(self, service_name, service_type):
-        message = self.load_external_plugin(service_name=service_name,
-                                            service_type=service_type)
-        if message["status"] != 200:
-            return None
-
-        service = message["service"]
-
-        address = "http://" + service["hostname"] + ":"
-        address += str(service["port"]) + "/"
-        address += service["service_name"]
-        return address
-
-    def load_external_plugin(self,
-                             service_type="*",
-                             service_name="*",
-                             host_address="*"):
-        broker_address = "localhost"
-        broker_port = 5555
-        # request plugin at broker:
-        context = zmq.Context()
-        socket = context.socket(zmq.REQ)
-        bk_url = "tcp://" + broker_address + ":" + str(broker_port)
-        socket.connect(bk_url)
-
-        socket.send(json.dumps({"get_service": {
-            "service_type": service_type,
-            "service_name": service_name,
-            "host_address": host_address
-            }
-            }))
-
-        message = socket.recv()
-        message = json.loads(message)
-        socket.close()
-        return message
-
-    def find_plugin(self, service_type, service_name, service_category):
-        # request plugin at broker:
-        topic = self.__build_topic(service_type, service_category, service_name, "*")
-        clients = self.__get_matching(plugins, topic)
-        try:
-            service = clients.next()
-        except Exception:
-            return None
-        return service
-
-    def __build_topic(self,
-                      service_type,
-                      service_category,
-                      service_name,
-                      host_address):
-        topic = service_type + "/" + service_category + "/" + service_name + "/" + host_address  # NOQA
-        return topic
-
-    def __get_matching(self, dictionary, topic):
-        regex = fnmatch.translate(str(topic))
-        reObj = re.compile(regex)
-        return (key for key in dictionary if reObj.search(key))
+    def find_plugin(self,
+                    service_type,
+                    service_category,
+                    service_name,
+                    host_address = "*"):
+        return self.module.get_plugin(service_type, service_category, service_name, host_address)
 
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "http://localhost:8888")

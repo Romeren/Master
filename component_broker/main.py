@@ -28,7 +28,7 @@ class PluginClients(object):
         self.service_type = service_type
 
     def to_json(self):
-        return {"hostname": self.hostname,
+        return {"host_address": self.hostname,
                 "port": self.port,
                 "service_name": self.service_name,
                 "service_category": self.service_category,
@@ -62,7 +62,7 @@ def handle_get_services(message):
     # response:
     reply = {"status": 200, "services": []}
     for service in clients:
-        reply["services"].append(service.to_json())
+        reply["services"].append(plugins[service].to_json())
     return reply
 
 
@@ -85,14 +85,17 @@ def handle_get_service(message):
 
     clients = get_matching(plugins, topic)
 
-    try:
-        service = clients.next()
-        print("get_service", service)
-        reply = {"status": 200,
-                 "message": "Service found",
-                 "service": plugins[service].to_json()}
-    except Exception:
+    service = None
+    for key in clients:
+        service = plugins[key].to_json()
+        break
+
+    if service is None:
         return {"status": 400, "error": "No service found!", "topic": topic}
+
+    reply = {"status": 200,
+             "message": "Service found",
+             "service": service}    
     return reply
 
 
@@ -106,13 +109,18 @@ def handle_plugins_register_unregister(message):
         if subscriping:
             print("Updating time: " + topic)
             plugins[topic].time = time.clock()
+            
+            __publish_event(topic, {"event": "update", "service":plugins[topic].to_json()})
+
             reply = {"status": 200,
                      "port": plugins[topic].port,
                      "message": "heartbeat accepted"}
         else:
-            print("Removing plugin: ", topic)
+            print(topic, topic)
             removed = plugins.pop(topic, None)
-            __publish_event("service/removed", removed.to_json())
+
+            __publish_event(topic, {"event": "remove", "service": removed.to_json()})
+            
             reply = {"status": 200, "message": "plugin correctly unsubscriped"}
     elif(subscriping):
         print("Adding plugin: ", topic)
@@ -124,7 +132,7 @@ def handle_plugins_register_unregister(message):
                                time.clock())
 
         plugins[topic] = plugin
-        __publish_event("service/added", plugin.to_json())
+        __publish_event(topic, {"event": "added", "service": plugin.to_json()})
         reply = {"status": 200,
                  "port": plugins[topic].port,
                  "message": "plugin correctly subscriped"}
@@ -189,7 +197,7 @@ def __build_topic(service_type, service_category, service_name, host_address):
 
 
 def __publish_event(topic, message):
-    publisher_socket.send_string("%s %s" % (topic, json.dumps(message)))
+    publisher_socket.send_multipart([bytearray(topic,"utf-8"), bytearray(json.dumps(message), "utf-8")])
 
 plugins = {}  # topic and wrapper class ---
 # topic = <service_type>/<service_category>/<service_name/<host_address>

@@ -24,4 +24,4 @@ static_paths = {
     "handler_settings": {'path': "webserver/javascript"}
 }
 
-framework([config], settings=server_settings)
+framework([config, static_paths], settings=server_settings)

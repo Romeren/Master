@@ -34,7 +34,8 @@ permision_service_address = None
 
 
 class Plugin(abstract_plugin):
-    def initialize(self):
+    def initialize(self, module):
+        self.module = module
         self.service_name = "building/entity"
 
     @asynchronous

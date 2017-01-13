@@ -4,18 +4,11 @@ from service_framework.a_plugin import RestHandler as abstract_plugin  # NOQA
 from tornado import gen
 from tornado.web import asynchronous
 
-validator_address = None
-host_address = None
-
 
 class Plugin(abstract_plugin):
-    def initialize(self):
+    def initialize(self, module):
+        self.module = module
         self.service_name = "account/login"
-
-        global host_address
-        if host_address is None:
-            host_address = self.get_external_plugin_address(self.service_name,
-                                                            "rest")
 
     def get(self):
         user = self.get_current_user()
@@ -23,8 +16,8 @@ class Plugin(abstract_plugin):
         if user:
             context["username"] = user
         context["location_js"] = self.service_name.replace("/", "\\\/")
-        global host_address
-        context["address"] = host_address
+
+        context["address"] = self.get_address()
 
         if not user:
             context["hasError"] = False
@@ -40,8 +33,8 @@ class Plugin(abstract_plugin):
         password = self.get_argument("password", "")
         context = {}
         context["location_js"] = self.service_name.replace("/", "\\\/")
-        global host_address
-        context["address"] = host_address
+
+        context["address"] = self.get_address()
 
         print(username, password)
         if(not username or
@@ -54,10 +47,8 @@ class Plugin(abstract_plugin):
 
         context["username"] = username
         # get/check address for validator plugin:
-        global validator_address
-        if validator_address is None:
-            validator_address = self.get_external_plugin_address("*/validate_user", "rest")  # NOQA
-            print(validator_address)
+        
+        validator_address = self.get_plugin_addr("account/basic/validate_user")
 
         # check username and password:
         params = {'username': username, 'password': password}
@@ -78,6 +69,16 @@ class Plugin(abstract_plugin):
         self.set_secure_cookie("user", username)
         self.render("html/loggedin.html", context=context)
         return
+
+    def get_address(self):
+        return self.get_plugin_addr(self.service_name, host=self.module.address)
+
+    def get_plugin_addr(self, service_name, service_type = "rest", service_category="plugin", host="*"):
+        info = self.find_plugin(service_type, service_category, service_name, host)
+        address = ""
+        if info is not None:
+            address = "http://" + info["hostname"] + ":" + info["port"] +"/" + info["service_name"]
+        return address
 
 config = {"service_name": "account/login",
           "handler": Plugin,

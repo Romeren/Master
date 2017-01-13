@@ -3,7 +3,8 @@ from service_framework.a_plugin import RestHandler as abstract_plugin  # NOQA
 
 
 class Plugin(abstract_plugin):
-    def initialize(self):
+    def initialize(self, module):
+    	self.module = module
         self.service_name = "miscellaneous/about"
 
     def get(self):

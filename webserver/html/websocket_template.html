@@ -2,6 +2,6 @@
 </div>
 <script>
 $( document ).ready(function() {
-    plugin_handler.connect('ws://{{ content["hostname"] }}:{{ content["port"] }}/ws',"{{ content["service_name_js"] }}");
+    plugin_handler.connect('ws://{{ content["host_address"] }}:{{ content["port"] }}/ws',"{{ content["service_name_js"] }}");
 });
 </script>
