@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-  # NOQA
 import json
-from service_framework.a_plugin import RestHandler as abstract_plugin  # NOQA
+from services.pages.common.a_handler import Page_handler as abstract_plugin  # NOQA
 from tornado import gen
 from tornado.web import asynchronous
 
@@ -13,18 +13,15 @@ class Plugin(abstract_plugin):
     def get(self):
         user = self.get_current_user()
         context = {}
-        if user:
-            context["username"] = user
-        context["location_js"] = self.service_name.replace("/", "\\\/")
+        context = self.set_user_info(user, context)
+        context = self.set_basic_context_info(context)
 
-        context["address"] = self.get_address()
+        context = self.set_page_reference(service_name=self.service_name,
+                                          context=context,
+                                          service_type="rest",
+                                          service_category="page")
 
-        if not user:
-            context["hasError"] = False
-            self.render("html/login.html", context=context)
-        else:
-            context["username"] = user
-            self.render("html/loggedin.html", context=context)
+        self.render("html/login.html", context=context)
 
     @asynchronous
     @gen.engine
@@ -32,9 +29,14 @@ class Plugin(abstract_plugin):
         username = self.get_argument("username", "")
         password = self.get_argument("password", "")
         context = {}
-        context["location_js"] = self.service_name.replace("/", "\\\/")
 
-        context["address"] = self.get_address()
+        context = self.set_user_info(None, context)
+        context = self.set_basic_context_info(context)
+
+        context = self.set_page_reference(service_name=self.service_name,
+                                          context=context,
+                                          service_type="rest",
+                                          service_category="page")
 
         print(username, password)
         if(not username or
@@ -45,10 +47,9 @@ class Plugin(abstract_plugin):
             self.render("html/login.html", context=context)
             return
 
-        context["username"] = username
         # get/check address for validator plugin:
-        
-        validator_address = self.get_plugin_addr("account/basic/validate_user")
+        plugin_address = "account/basic/validate_user"
+        validator_address = self.get_plugin_address(plugin_address)
 
         # check username and password:
         params = {'username': username, 'password': password}
@@ -67,21 +68,20 @@ class Plugin(abstract_plugin):
             return
 
         self.set_secure_cookie("user", username)
-        self.render("html/loggedin.html", context=context)
+        self.set_user_info(username, context)
+        self.render("html/login.html", context=context)
         return
 
     def get_address(self):
-        return self.get_plugin_addr(self.service_name, host=self.module.address)
-
-    def get_plugin_addr(self, service_name, service_type = "rest", service_category="plugin", host="*"):
-        info = self.find_plugin(service_type, service_category, service_name, host)
-        address = ""
-        if info is not None:
-            address = "http://" + info["hostname"] + ":" + info["port"] +"/" + info["service_name"]
-        return address
+        return self.get_plugin_address(self.service_name,
+                                       host=self.module.address)
 
 config = {"service_name": "account/login",
           "handler": Plugin,
           "service_type": "rest",
-          "service_category": "plugin"
+          "service_category": "pages",
+          "dependencies": [
+              # topic, topic, topic
+              "rest/plugin/account/basic/validate_user"
+              ]
           }

@@ -1,10 +1,11 @@
+{% if context["user"] is None %}
 <div class="panel panel-default">
   <div class="panel-heading">Welcome to Informatics</div>
   <div class="panel-body">
-    {% if context["hasError"] %}
+    {% if context["locations"]["account/login"]["hasError"] %}
         <p>Ops... Thats not a valid username or password </p>
     {% end %}
-    <form role="form" onSubmit="return loadRestService('#{{ context["location_js"] }}', '{{ context["address"] }}', requestType='POST', data={'username': $(&quot;input[name='username']&quot;)[0].value, 'password': $(&quot;input[name='password']&quot;)[0].value});">
+    <form role="form" onSubmit="return loadRestService('#{{ context["locations"]["account/login"]["location_js"] }}', '{{ context["locations"]["account/login"]["address"] }}', requestType='POST', data={'username': $(&quot;input[name='username']&quot;)[0].value, 'password': $(&quot;input[name='password']&quot;)[0].value});">
       <fieldset>
           <div class="form-group">
               <input type="text" class="form-control" name="username" placeholder="Username">
@@ -19,3 +20,10 @@
     </form>
   </div>
 </div>
+{% else %}
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        Welcome {{ context["user"] }}!
+    </div>
+</div>
+{% end %}

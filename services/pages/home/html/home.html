@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+{% module Head_Module(context) %}
+<body>
+{% module Navbar_Module(context) %}
+
+<div class="container">
+    {% if context["loggedin"] %}
+        {% module About_Module(context) %}
+    {% else %}
+    <div class="col-md-8">
+        {% module About_Module(context) %}
+    </div>
+    <div class="col-md-4">
+        {% module Signup_Module(context) %}
+    </div>
+    {% end %}
+</div>
+
+{% module Footer_Module(context) %}
+</body>
+</html>

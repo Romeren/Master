@@ -4,7 +4,7 @@ from service_framework.a_plugin import RestHandler as abstract_plugin  # NOQA
 
 
 class Plugin(abstract_plugin):
-    
+
     def initialize(self, module):
         self.module = module
         # urls and command attachment:
@@ -27,6 +27,7 @@ class Plugin(abstract_plugin):
         if slug[0] in self.paths:
             context = {}
             user = self.get_secure_cookie("user")
+            context = self.set_basic_context_info(context)
             context = self.set_user_info(user, context)
 
             method = self.pathCmd[slug[0]]
@@ -60,7 +61,7 @@ class Plugin(abstract_plugin):
         context = context
 
         # request about plugin at broker:
-        context["about"] = self.get_plugin_formed("miscellaneous/about", "plugin")  # NOQA
+        context["about"] = self.get_plugin_formed("about", "page")  # NOQA
         if context["loggedin"]:
             self.render(html_path, context=context)
             return
@@ -78,8 +79,20 @@ class Plugin(abstract_plugin):
             context["user"] = None
         return context
 
-    def get_plugin_formed(self, service_name, service_category, service_type = "*"):
-        message = self.find_plugin(service_type, service_category, service_name)
+    def set_basic_context_info(self, context):
+        fields = ["javascripts", "miscellanceous"]
+        context[fields[0]] = self.get_plugin_address(fields[0],
+                                                     service_category=fields[1]
+                                                     )
+        return context
+
+    def get_plugin_formed(self,
+                          service_name,
+                          service_category,
+                          service_type="*"):
+        message = self.find_plugin(service_type,
+                                   service_category,
+                                   service_name)
         print("get_plugin", message)
         if message is None:
             return {"content": "No module found", "type": "text"}
@@ -92,12 +105,8 @@ config = {"service_name": "home",
           "service_type": "rest",
           "service_category": "plugin",
           "path": r"^(?!\/java).*$",
-          "dependencies":[{
-                "service_type": "*",
-                "service_category": "*",
-                "service_name": "*",
-                "host_address": "*"
-            }
-          ]
+          "dependencies": [
+              # topic, topic, topic
+              ""
+              ]
           }
-

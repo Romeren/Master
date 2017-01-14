@@ -1,0 +1,7 @@
+<div id="{{ content["service_name"] }}">
+</div>
+<script>
+$( document ).ready(function() {
+    plugin_handler.connect('ws://{{ content["host_address"] }}:{{ content["port"] }}/ws',"{{ content["service_name_js"] }}");
+});
+</script>

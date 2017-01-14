@@ -97,7 +97,7 @@ class RestHandler(web.RequestHandler):
             header["user"] = token
 
         if isPost:
-            client = tornado.httpclient.AsyncHTTPClient()
+            client = httpclient.AsyncHTTPClient()
             return gen.Task(client.fetch,
                             address,
                             method="POST",
@@ -106,20 +106,51 @@ class RestHandler(web.RequestHandler):
         else:
             url = address + "/?" + params
 
-            client = tornado.httpclient.AsyncHTTPClient()
+            client = httpclient.AsyncHTTPClient()
             return gen.Task(client.fetch,
                             url,
                             headers=header)
+
+    def get_plugin_address(self,
+                           service_name,
+                           service_type="rest",
+                           service_category="plugin",
+                           host="*"):
+        info = self.find_plugin(service_type,
+                                service_category,
+                                service_name,
+                                host)
+        # print(info)
+        address = ""
+        if info is not None:
+            address = "http://" + info["host_address"]
+            address += ":" + str(info["port"])
+            address += "/" + info["service_name"]
+        return address
+
+    def find_plugins(self,
+                     service_type,
+                     service_category,
+                     service_name,
+                     host_address="*"):
+        return self.module.get_plugin(service_type,
+                                      service_category,
+                                      service_name,
+                                      host_address)
 
     def find_plugin(self,
                     service_type,
                     service_category,
                     service_name,
-                    host_address = "*"):
-        return self.module.get_plugin(service_type, service_category, service_name, host_address)
+                    host_address="*"):
+        return self.module.get_plugin(service_type,
+                                      service_category,
+                                      service_name,
+                                      host_address)
 
     def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "http://localhost:8888")
+        self.set_header("Access-Control-Allow-Origin", "*")
+        # "http://localhost:8888")
         self.set_header('Access-Control-Allow-Credentials', 'true')
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')

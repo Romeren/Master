@@ -51,11 +51,21 @@ def handle_get_services(message):
     #       host_address: <address> ~optional
     #   }
     # }
+    # or a lookup can be performed by topic:
+    # {
+    #   get_service_list: {
+    #       topic: <path> ~required
+    #   }
+    # }
     request = message["get_service_list"]
-    if("service_type" not in request):
+    if("service_type" not in request and "topic" not in request):
         return {"status": 400, "error": "Invalid request!"}
 
-    topic = __build_topic_from_request(request)
+    topic = None
+    if "topic" in request:
+        topic = request["topic"]
+    else:
+        topic = __build_topic_from_request(request)
 
     clients = get_matching(plugins, topic)
 
@@ -78,10 +88,19 @@ def handle_get_service(message):
     #       host_address : <address>  ~ optional
     #       ...
     #    }
+    # Or a service can be located by topuic:
+    #  get_service : {
+    #       topic : <topic>  ~ required
+    #    }
     # }
     request = message["get_service"]
 
-    topic = __build_topic_from_request(request)
+    topic = None
+
+    if "topic" in request:
+        topic = request["topic"]
+    else:
+        topic = __build_topic_from_request(request)
 
     clients = get_matching(plugins, topic)
 
@@ -95,12 +114,14 @@ def handle_get_service(message):
 
     reply = {"status": 200,
              "message": "Service found",
-             "service": service}    
+             "service": service}
     return reply
 
 
 def handle_plugins_register_unregister(message):
     reply = {"status": 400, "ERROR": "Invalid Message"}
+    # print("")
+    # print(message)
     subscriping = message["subscribe"]
     port = message["port"]
     topic = topic = __build_topic_from_request(message)
@@ -109,21 +130,23 @@ def handle_plugins_register_unregister(message):
         if subscriping:
             print("Updating time: " + topic)
             plugins[topic].time = time.clock()
-            
-            __publish_event(topic, {"event": "update", "service":plugins[topic].to_json()})
+
+            __publish_event(topic, {"event": "update",
+                                    "service": plugins[topic].to_json()})
 
             reply = {"status": 200,
                      "port": plugins[topic].port,
                      "message": "heartbeat accepted"}
         else:
-            print(topic, topic)
+            print("Removing plugin: ", topic, "port", port)
             removed = plugins.pop(topic, None)
 
-            __publish_event(topic, {"event": "remove", "service": removed.to_json()})
-            
+            __publish_event(topic, {"event": "remove",
+                                    "service": removed.to_json()})
+
             reply = {"status": 200, "message": "plugin correctly unsubscriped"}
     elif(subscriping):
-        print("Adding plugin: ", topic)
+        print("Adding plugin: ", topic, "port", port)
         plugin = PluginClients(message["service_type"],
                                message["service_name"],
                                message["host_address"],
@@ -149,21 +172,30 @@ def handle_request_config(message):
 
     # Checking if host host multiple plugins:
     candidate = port + 1
+    is_requesting_specific_port = False
     if "port" in message:
+        is_requesting_specific_port = True
         candidate = message["port"]
 
-    for plugin in get_matching(plugins, "*/*/" + host):
-        if(plugins[plugin].port == candidate):
-            if "port" in message:
-                reply["message"] = "PORT allready in use!"
-                return reply
-            else:
-                candidate += 1
+    # print("config_in:", message)
+    obtained_ports = []
+    for plugin in get_matching(plugins, "*/*/*/" + host):
+        obtained_ports.append(plugins[plugin].port)
+
+    port_taken = True
+    candidate = port + 1
+    while port_taken:
+        if is_requesting_specific_port and candidate in obtained_ports:
+            reply["message"] = "PORT allready in use!"
+            return reply
+        elif candidate in obtained_ports:
+            candidate += 1
         else:
-            break
+            port_taken = False
 
     # TODO(create): randomly gennerated secret:
     application_secret = "__TODO:_GENERATE_YOUR_OWN_RANDOM_VALUE_HERE__"
+    # print("assigned port:", candidate)
     reply = {"status": 200,
              "port": candidate,
              "application_secret": application_secret,
@@ -197,7 +229,8 @@ def __build_topic(service_type, service_category, service_name, host_address):
 
 
 def __publish_event(topic, message):
-    publisher_socket.send_multipart([bytearray(topic,"utf-8"), bytearray(json.dumps(message), "utf-8")])
+    publisher_socket.send_multipart([bytearray(topic, "utf-8"),
+                                     bytearray(json.dumps(message), "utf-8")])
 
 plugins = {}  # topic and wrapper class ---
 # topic = <service_type>/<service_category>/<service_name/<host_address>

@@ -1,0 +1,21 @@
+{% if context["user"] is None %}
+<div class="panel panel-default">
+  <div class="panel-heading">Sign up</div>
+  <div class="panel-body">
+    <form role="form" onSubmit="return loadRestService('#{{ context["locations"]["account/signup"]["location_js"] }}', '{{ context["locations"]["account/signup"]["address"] }}', requestType='POST', data={'username': $(&quot;input[name='username']&quot;)[0].value, 'password': $(&quot;input[name='password']&quot;)[0].value});">
+        {% if context["locations"]["account/signup"]["hasError"] %}
+          <div class="text-danger">Username or password was incorrect! please try again...</div>
+        {% end %}
+        <fieldset>
+        <input type="text", placeholder="Username" name="username"></input>
+        <input type="password", placeholder="Password" name="password"></input>
+        <input type="submit" value="Create the account"></input>
+      </fieldset>
+    </form>
+  </div>
+</div>
+{% else%}
+<div class="panel panel-default">
+  <div class="panel-heading">Congratulation! -you are allready logedin!</div>
+</div>
+{% end %}
