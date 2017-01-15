@@ -111,42 +111,45 @@ class RestHandler(web.RequestHandler):
                             url,
                             headers=header)
 
-    def get_plugin_address(self,
-                           service_name,
-                           service_type="rest",
-                           service_category="plugin",
-                           host="*"):
-        info = self.find_plugin(service_type,
-                                service_category,
-                                service_name,
-                                host)
-        # print(info)
-        address = ""
-        if info is not None:
-            address = "http://" + info["host_address"]
-            address += ":" + str(info["port"])
-            address += "/" + info["service_name"]
+    def get_service_address(self,
+                            service_name,
+                            service_type="rest",
+                            service_category="plugin",
+                            host="*"):
+        info = self.find_service(service_type,
+                                 service_category,
+                                 service_name,
+                                 host)
+
+        return self.get_service_address_from_request(info)
+
+    def get_service_address_from_request(self, request):
+        address = None
+        if request is not None:
+            address = "http://" + request["host_address"]
+            address += ":" + str(request["port"])
+            address += "/" + request["service_name"]
         return address
 
-    def find_plugins(self,
+    def find_services(self,
+                      service_type,
+                      service_category,
+                      service_name,
+                      host_address="*"):
+        return self.module.get_services(service_type,
+                                        service_category,
+                                        service_name,
+                                        host_address)
+
+    def find_service(self,
                      service_type,
                      service_category,
                      service_name,
                      host_address="*"):
-        return self.module.get_plugin(service_type,
-                                      service_category,
-                                      service_name,
-                                      host_address)
-
-    def find_plugin(self,
-                    service_type,
-                    service_category,
-                    service_name,
-                    host_address="*"):
-        return self.module.get_plugin(service_type,
-                                      service_category,
-                                      service_name,
-                                      host_address)
+        return self.module.get_service(service_type,
+                                       service_category,
+                                       service_name,
+                                       host_address)
 
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -154,6 +157,52 @@ class RestHandler(web.RequestHandler):
         self.set_header('Access-Control-Allow-Credentials', 'true')
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+
+    def get_basic_context(self):
+        context = {}
+        fields = ["javascripts", "miscellanceous"]
+        context[fields[0]] = self.get_service_address(fields[0],
+                                                      service_category=fields[1]  # NOQA
+                                                      )
+        context = self.__set_user_info(context)
+        context["references"] = {}
+        return context
+
+    def get_service_reference(self,
+                              service_type,
+                              service_category,
+                              service_name):
+        return self.__get_service_ref(service_name=service_name,
+                                      addr=self.get_service_address(service_name=service_name,  # NOQA
+                                                                    service_type=service_type,  # NOQA
+                                                                    service_category=service_category),  # NOQA
+                                      error=False)
+
+    def get_service_reference_from_request(self, request):
+        return self.__get_service_ref(service_name=request["service_name"],  # NOQA
+                                      addr=self.get_service_address_from_request(request),  # NOQA
+                                      error=False)
+
+    def __get_service_ref(self,
+                          service_name,
+                          addr,
+                          error=False):
+            return {
+                "name": service_name.replace("_", " "),
+                "service_name_js": service_name.replace("/", "\\\/"),
+                "service_name": service_name,
+                "address": addr,
+                "hasError": error
+            }
+
+    def __set_user_info(self, context):
+        user = self.get_current_user()
+        context["user"] = user
+        if user:
+            context["loggedin"] = True
+        else:
+            context["loggedin"] = False
+        return context
 
     def get(self):
         pass

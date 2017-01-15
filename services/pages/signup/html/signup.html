@@ -2,12 +2,12 @@
 <html>
 {% module Head_Module(context) %}
 <body>
-{% module Navbar_Module(context) %}
+{% module Rest_Service_Module(context["references"]["navbar"]) %}
 
 <div class="container">
-    {% module Signup_Module(context) %}
+    {% module Rest_Service_Module(context["references"]["signup"]) %}
 </div>
 
-{% module Footer_Module(context) %}
+{% module Rest_Service_Module(context["references"]["footer"]) %}
 </body>
 </html>

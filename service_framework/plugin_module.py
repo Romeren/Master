@@ -177,7 +177,25 @@ class Plugin_module(object):
 # --------------------------------------------------------
 # Publish subscripe functions
 # --------------------------------------------------------
-    def get_plugins(self,
+    def get_services(self,
+                     service_type,
+                     service_category,
+                     service_name,
+                     host_address):
+        # request plugin at broker:
+        topic = self.__build_topic(service_type,
+                                   service_category,
+                                   service_name,
+                                   host_address)
+        clients = self.__get_matching(self.__get_services(), topic)
+
+        elm = []
+        for key in clients:
+            elm.append(self.__get_services()[key])
+
+        return elm
+
+    def get_service(self,
                     service_type,
                     service_category,
                     service_name,
@@ -187,31 +205,13 @@ class Plugin_module(object):
                                    service_category,
                                    service_name,
                                    host_address)
-        clients = self.__get_matching(self.__get_plugins(), topic)
-
-        elm = []
-        for key in clients:
-            elm.append(self.__get_plugins()[key])
-
-        return elm
-
-    def get_plugin(self,
-                   service_type,
-                   service_category,
-                   service_name,
-                   host_address):
-        # request plugin at broker:
-        topic = self.__build_topic(service_type,
-                                   service_category,
-                                   service_name,
-                                   host_address)
         #  print("get_plugin", topic)
         # print(topic)
-        clients = self.__get_matching(self.__get_plugins(), topic)
+        clients = self.__get_matching(self.__get_services(), topic)
 
         elm = None
         for key in clients:
-            elm = self.__get_plugins()[key]
+            elm = self.__get_services()[key]
             break
 
         return elm
@@ -232,7 +232,7 @@ class Plugin_module(object):
                                                   config[fields[1]],
                                                   config[fields[2]],
                                                   self.address)[0]
-            self.__get_plugins()[topic] = plugin
+            self.__get_services()[topic] = plugin
 
             if "dependencies" in config:
                 for dep in config["dependencies"]:
@@ -241,9 +241,9 @@ class Plugin_module(object):
                     for service in plugins:
                         topic = self.__build_topic_from_request(service)
                         topics.append(topic)
-                        self.__get_plugins()[topic] = service
+                        self.__get_services()[topic] = service
         # print("topics for plugin", topics)
-        # print("plugins_found ", self.__get_plugins())
+        # print("plugins_found ", self.__get_services())
         return topics
 
     def broker_event_subscriber(self, broker_address, broker_port, stop_event):
@@ -273,16 +273,16 @@ class Plugin_module(object):
 
                 if info["event"] == "remove":
                     print("REMOVED:", topic)
-                    self.__get_plugins().pop(topic, None)
+                    self.__get_services().pop(topic, None)
                 else:
                     print(info["event"], topic)
-                    self.__get_plugins()[topic] = info["service"]
+                    self.__get_services()[topic] = info["service"]
         print("SUBSCRIBER HAVE BEEN TERMINATED!")
 
 # --------------------------------------------------------
 # Utiliy functions
 # --------------------------------------------------------
-    def __get_plugins(self):
+    def __get_services(self):
         if self.plugins is None:
             self.plugins = {}
         return self.plugins

@@ -7,37 +7,24 @@
         <center>
             <div class="navbar-collapse " id="znavbar-main">
                 <ul class="nav navbar-nav">
-                    <li class=""><a href="/">Home</a>
-                    </li>
-                    {% if context["user"] is not None %}
-                    <li class=""><a href="/">My Buildings</a>
-                    </li>
+                    {% for btn in context["btns"] %}
+                        {% if not btn["name"].startswith("account") %}
+                        <li class="">
+                            <a href="{{ btn["address"] }}">{{ btn["name"] }}</a>
+                        </li>
+                        {% end %}
                     {% end %}
-                    <!--
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="#">Action</a>
-                            </li>
-                            <li><a href="#">Another action</a>
-                            </li>
-                            <li><a href="#">Something else here</a>
-                            </li>
-                            <li class="divider"></li>
-                            <li><a href="#">Separated link</a>
-                            </li>
-                            <li class="divider"></li>
-                            <li><a href="#">One more separated link</a>
-                            </li>
-                        </ul>
-                    </li>
-                  -->
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     {% if context["user"] is None %}
-                    <li>
-                        <a href="/account/login">Login</a>
-                    </li>
+                        {% for btn in context["btns"] %}
+                            {% if btn["name"].startswith("account") %}
+                            <li class="">
+                                <a href="{{ btn["address"] }}">{{ btn["name"].replace("account/", "") }}</a>
+                            </li>
+                        {% end %}
+                    {% end %}
+
                     {% else %}
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ user }} <b class="caret"></b></a>

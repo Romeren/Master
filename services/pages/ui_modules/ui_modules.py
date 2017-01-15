@@ -21,33 +21,3 @@ class Head_Module(UIModule):
     def render(self, context):
         return self.render_string(
             "html/head.html", context=context)
-
-
-class Navbar_Module(UIModule):
-    def render(self, context):
-        return self.render_string(
-            "html/navbar.html", context=context)
-
-
-class About_Module(UIModule):
-    def render(self, context):
-        return self.render_string(
-            "html/about.html", context=context)
-
-
-class Footer_Module(UIModule):
-    def render(self, context):
-        return self.render_string(
-            "html/footer.html", context=context)
-
-
-class Login_Module(UIModule):
-    def render(self, context):
-        return self.render_string(
-            "html/login.html", context=context)
-
-
-class Signup_Module(UIModule):
-    def render(self, context):
-        return self.render_string(
-            "html/signup.html", context=context)

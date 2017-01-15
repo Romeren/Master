@@ -2,21 +2,21 @@
 <html>
 {% module Head_Module(context) %}
 <body>
-{% module Navbar_Module(context) %}
+{% module Rest_Service_Module(context["references"]["navbar"]) %}
 
 <div class="container">
     {% if context["loggedin"] %}
-        {% module About_Module(context) %}
+        {% module Rest_Service_Module(context["references"]["about"]) %}
     {% else %}
     <div class="col-md-8">
-        {% module About_Module(context) %}
+        {% module Rest_Service_Module(context["references"]["about"]) %}
     </div>
     <div class="col-md-4">
-        {% module Signup_Module(context) %}
+        {% module Rest_Service_Module(context["references"]["signup"]) %}
     </div>
     {% end %}
-</div>
 
-{% module Footer_Module(context) %}
+</div>
+{% module Rest_Service_Module(context["references"]["footer"]) %}
 </body>
 </html>

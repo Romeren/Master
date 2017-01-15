@@ -8,12 +8,7 @@ from services.pages.ui_modules import ui_modules as uim
 server_settings = {
     "ui_modules": {"Rest_Service_Module": uim.Rest_Service_Module,
                    "Websocket_Service_Module": uim.Websock_Service_Module,
-                   "Navbar_Module": uim.Navbar_Module,
-                   "Footer_Module": uim.Footer_Module,
-                   "Head_Module": uim.Head_Module,
-                   "About_Module": uim.About_Module,
-                   "Login_Module": uim.Login_Module,
-                   "Signup_Module": uim.Signup_Module
+                   "Head_Module": uim.Head_Module
                    },
 }
 

@@ -2,10 +2,10 @@
 <div class="panel panel-default">
   <div class="panel-heading">Welcome to Informatics</div>
   <div class="panel-body">
-    {% if context["locations"]["account/login"]["hasError"] %}
+    {% if context["references"]["login"]["hasError"] %}
         <p>Ops... Thats not a valid username or password </p>
     {% end %}
-    <form role="form" onSubmit="return loadRestService('#{{ context["locations"]["account/login"]["location_js"] }}', '{{ context["locations"]["account/login"]["address"] }}', requestType='POST', data={'username': $(&quot;input[name='username']&quot;)[0].value, 'password': $(&quot;input[name='password']&quot;)[0].value});">
+    <form role="form" onSubmit="return loadRestService('#{{ context["references"]["login"]["service_name_js"] }}', '{{ context["references"]["login"]["address"] }}', requestType='POST', data={'username': $(&quot;input[name='username']&quot;)[0].value, 'password': $(&quot;input[name='password']&quot;)[0].value});">
       <fieldset>
           <div class="form-group">
               <input type="text" class="form-control" name="username" placeholder="Username">

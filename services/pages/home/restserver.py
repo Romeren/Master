@@ -1,45 +1,40 @@
 # -*- coding: utf-8 -*-  # NOQA
-from services.pages.common.a_handler import Page_handler as abstract_plugin  # NOQA
+from service_framework.a_plugin import RestHandler as abstract_plugin  # NOQA
 
 
-class Plugin(abstract_plugin):
+class Service(abstract_plugin):
     def initialize(self, module):
         self.module = module
         self.service_name = "home"
 
     def get(self):
         html_path = "html/home.html"
-        context = {}
-        user = self.get_secure_cookie("user")
-        context = self.set_user_info(user, context)
-        context = self.set_basic_context_info(context)
+        context = self.get_basic_context()
 
-        context = self.set_page_reference(service_name="account/signup",
-                                          context=context,
-                                          service_type="rest",
-                                          service_category="page")
+        refs = ["footer", "about", "navbar"]
+
+        if not context["user"]:
+            refs.append("signup")
+
+        context = self.set_references(refs, context)
 
         self.render(html_path, context=context)
 
-    def get_plugin_formed(self,
-                          service_name,
-                          service_category,
-                          service_type="*"):
-        message = self.find_plugin(service_type,
-                                   service_category,
-                                   service_name)
-        print("get_plugin", message)
-        if message is None:
-            return {"content": "No module found", "type": "text"}
-        else:
-            return {"type": message["service_type"],
-                    "content": message}
+    def set_references(self, names, context):
+        ref = "references"
+        for name in names:
+            context[ref][name] = self.get_service_reference(service_name=name,  # NOQA
+                                                                service_type="rest",  # NOQA
+                                                                service_category="ui_module")  # NOQA
+        return context
+
 
 config = {"service_name": "home",
-          "handler": Plugin,
+          "handler": Service,
           "service_type": "rest",
           "service_category": "page",
           "dependencies": [
+              "rest/ui_module",
               "rest/plugin/account/signup",
               "rest/page/about",
               "rest/miscellanceous/javascripts"

@@ -2,8 +2,8 @@
 <div class="panel panel-default">
   <div class="panel-heading">Sign up</div>
   <div class="panel-body">
-    <form role="form" onSubmit="return loadRestService('#{{ context["locations"]["account/signup"]["location_js"] }}', '{{ context["locations"]["account/signup"]["address"] }}', requestType='POST', data={'username': $(&quot;input[name='username']&quot;)[0].value, 'password': $(&quot;input[name='password']&quot;)[0].value});">
-        {% if context["locations"]["account/signup"]["hasError"] %}
+    <form role="form" onSubmit="return loadRestService('#{{ context["references"]["signup"]["service_name_js"] }}', '{{ context["references"]["signup"]["address"] }}', requestType='POST', data={'username': $(&quot;input[name='username']&quot;)[0].value, 'password': $(&quot;input[name='password']&quot;)[0].value});">
+        {% if context["references"]["signup"]["hasError"] %}
           <div class="text-danger">Username or password was incorrect! please try again...</div>
         {% end %}
         <fieldset>
