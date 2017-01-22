@@ -55,7 +55,7 @@ class Service(abstract_plugin):
 
         # check username does not exists
         pluginname = "account/basic/check_username"
-        check_username_addr = self.get_plugin_address(pluginname)
+        check_username_addr = self.get_service_address(pluginname)
 
         # check username:
         params = {'username': username}
@@ -78,7 +78,7 @@ class Service(abstract_plugin):
 
         # store username and address
         pluginname = "account/basic/store_user"
-        store_user_addr = self.get_plugin_address(pluginname)
+        store_user_addr = self.get_service_address(pluginname)
 
         params = {'username': username,
                   'password': password}

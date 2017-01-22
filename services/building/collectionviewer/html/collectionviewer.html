@@ -1,0 +1,17 @@
+{% if context["user"] is not None %}
+<div class="panel panel-default">
+  <div class="panel-heading">Collection viewer
+      <div class="btn-group pull-right">
+        <button class="btn btn-default btn-sm">Edit</button>
+      </div>
+  </div>
+  <div class="panel-body">
+  </div>
+</div>
+{% else %}
+<div class="panel panel-warning">
+    <div class="panel-heading">
+        You must login!
+    </div>
+</div>
+{% end %}

@@ -3,10 +3,11 @@ function loadRestService(htmlLocation, hostLocaton, requestType="GET", data = ""
      type: requestType,
      url: hostLocaton,
      data: data,
-    // xhrFields: {
-    //     withCredentials: true
-    // },
-     success:function(response){
+     crossDomain: true,
+     xhrFields: {
+          withCredentials: true
+    },
+     success:function(response, textStatus, request){
          // do stuff with json (in this case an array)
          $(htmlLocation).html(response);
      },

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+{% module Head_Module(context) %}
+<body>
+{% module Rest_Service_Module(context["references"]["navbar"]) %}
+
+<div class="container">
+    {% if context["references"]["plugin"] is not None %}
+        {% module Rest_Service_Module(context["references"]["plugin"]) %}
+    {% end %}
+</div>
+{% module Rest_Service_Module(context["references"]["footer"]) %}
+</body>
+</html>

@@ -94,7 +94,7 @@ class RestHandler(web.RequestHandler):
         header = {}
         token = self.get_cookie("user")
         if token is not None:
-            header["user"] = token
+            header["Cookie"] = "user="+token
 
         if isPost:
             client = httpclient.AsyncHTTPClient()
@@ -108,7 +108,8 @@ class RestHandler(web.RequestHandler):
 
             client = httpclient.AsyncHTTPClient()
             return gen.Task(client.fetch,
-                            url,
+                            request=url,
+                            method="GET",
                             headers=header)
 
     def get_service_address(self,
@@ -152,8 +153,12 @@ class RestHandler(web.RequestHandler):
                                        host_address)
 
     def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        # "http://localhost:8888")
+        origin = self.request.headers.get('Origin')
+        # TODO(SECURITY): check origin from a list!
+        if origin is None:
+            self.set_header("Access-Control-Allow-Origin", "*")
+        else:
+            self.set_header("Access-Control-Allow-Origin", origin)
         self.set_header('Access-Control-Allow-Credentials', 'true')
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')

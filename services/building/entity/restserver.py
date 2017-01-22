@@ -33,7 +33,7 @@ import uuid
 permision_service_address = None
 
 
-class Plugin(abstract_plugin):
+class Service(abstract_plugin):
     def initialize(self, module):
         self.module = module
         self.service_name = "building/entity"
@@ -50,6 +50,7 @@ class Plugin(abstract_plugin):
 
         user = self.get_current_user()
         if not user:
+            print("BUILDING ENTITY NO USER")
             reply["status"] = 401
             self.write(reply)
             return
@@ -248,7 +249,11 @@ class Plugin(abstract_plugin):
                 return False, None
 
 config = {"service_name": "building/entity",
-          "handler": Plugin,
+          "handler": Service,
           "service_type": "rest",
-          "service_category": "plugin"
+          "service_category": "plugin",
+          "dependencies": [
+              # topic, topic, topic
+              "rest/plugin/account/ownership"
+              ]
           }

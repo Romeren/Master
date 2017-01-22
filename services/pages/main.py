@@ -2,6 +2,7 @@
 from service_framework.plugin_module import Plugin_module as framework  # NOQA
 from services.pages.home.restserver import config as home  # NOQA
 from services.pages.login.restserver import config as login  # NOQA
+from services.pages.pluginviewer.restserver import config as pluginview
 from services.pages.signup.restserver import config as signup  # NOQA
 from services.pages.ui_modules import ui_modules as uim
 
@@ -12,4 +13,4 @@ server_settings = {
                    },
 }
 
-framework([home, login, signup], settings=server_settings)
+framework([home, login, signup, pluginview], settings=server_settings)
