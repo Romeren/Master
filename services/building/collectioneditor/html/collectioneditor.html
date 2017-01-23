@@ -1,5 +1,8 @@
 {% if context["user"] is not None %}
 <div class="panel panel-default">
+  {% if "message" not in context %}
+    <form>
+  {% end %}
   <div class="panel-heading">Collection Editor
       <div class="btn-group pull-right">
         <button class="btn btn-default btn-sm">Submit</button>
@@ -8,8 +11,104 @@
   <div class="panel-body">
       {% if "message" in context %}
         {{ context["message"] }}
+      {% else %}
+        <ul id="collection-editor-toplist-element">
+        </ul>
+
+        <script type="text/javascript">
+        function set_tree_panel_nested_options(val){
+          window.tree_panel_nested_options = val;
+        }
+
+        function createselectoptions(element){
+          options = window.tree_panel_nested_options;
+            result = undefined;
+            if(options != undefined){
+                result = [];
+             for(i = 0 ; i < options.length; i++){
+                    var tmp = document.createElement("option");
+                    tmp.value = options[i];
+                    tmp.append(options[i]);
+                    result.push(tmp);
+             }
+            }
+          return result;
+        }
+
+        function createinnernode(selectoptions){
+            var newElement = document.createElement("ul");
+            newElement.append(createNode(selectoptions));
+            return newElement;
+        }
+
+        function createNode(selectoptions){
+            var listItem = document.createElement("li");
+            var selector = document.createElement("select");
+            var inputfield = document.createElement("input");
+
+            inputfield.type = "text";
+            inputfield.addEventListener('change', function(){createpropertychangelistener(inputfield)});
+
+            for(var i = 0; i < selectoptions.length; i++){
+                selector.append(selectoptions[i]);
+            }
+
+            listItem.append(selector);
+            listItem.append(inputfield);
+            return listItem;
+        }
+
+        function createpropertychangelistener(sender){
+          var li = sender.parentElement;
+          var select = li.children[0];
+          var lastElementOfParent = li.parentElement.children[li.parentElement.children.length -1];
+
+            // append new parent element:
+            
+            // create empty node for adding inside at the changed node:
+            var options = createselectoptions(select.value);
+            if(options != undefined){
+                var lastInput = lastElementOfParent.children[1];
+                if(lastInput.value != ""){
+                    var endNode = createinnernode(options);
+                    li.append(endNode);
+                }
+            }
+
+            // Check if node at end of list is needed:
+            var ulElm = li.parentElement;
+            var lastElmOfP = ulElm.children[ulElm.children.length -1];
+            if(lastElmOfP.children[1].value == ""){
+                return;
+            }
+
+            // create an empty node at the end of the list:
+            // create options:
+            var opt = []
+            for(var i = 0, len = select.children.length; i < len; i++){
+                opt.push(select.children[i].cloneNode(true));
+            } 
+
+            var node = createNode(opt);
+            li.parentElement.append(node);
+        }
+
+        $( document ).ready(function() {
+            console.log( "ready!" );
+            var json = JSON.parse('{% raw context["nested_options"] %}');
+            
+            //Dictionary<string, string> values = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+            
+            window.tree_panel_nested_options = json;
+            
+            console.log("DONE!");
+        });
+        </script>
       {% end %}
   </div>
+  {% if "message" not in context %}
+    </form>
+  {% end %}
 </div>
 {% else %}
 <div class="panel panel-warning">

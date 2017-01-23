@@ -13,6 +13,12 @@ class Service(abstract_plugin):
         htmlPath = "html/collectioneditor.html"
         context = self.get_basic_context()
 
+        nested_options = {"property" : ["building"],
+                      "building" : ["floor","room"],
+                      "floor" : ["room"]};
+
+        context["nested_options"] =  '{"property": ["building"]}' # json.dumps(nested_options)
+
         self.render(htmlPath, context=context)
 
 
