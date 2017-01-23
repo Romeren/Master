@@ -259,8 +259,7 @@ class Plugin_module(object):
 
         # SUBSCRIBE for topics:
         for topic in topics:
-            # print(topic)
-            socket.setsockopt_string(zmq.SUBSCRIBE, unicode(topic))
+            socket.setsockopt_string(zmq.SUBSCRIBE, str(topic))
 
         # initiate listener:
         poller = zmq.Poller()
@@ -338,7 +337,7 @@ class Plugin_module(object):
     def __get_matching(self, dictionary, topic):
         regex = fnmatch.translate(str(topic))
         reObj = re.compile(regex)
-        return (key for key in dictionary if reObj.search(key))
+        return (key for key in dictionary if reObj.search(str(key)))
 
 # --------------------------------------------------------
 # Exit and termination handlers:

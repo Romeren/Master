@@ -12,10 +12,10 @@ class Plugin(abstract_plugin):
 
         # validate input
         if(username is None or
-           not isinstance(username, (str, unicode)) or
+           not isinstance(username, (str, bytes)) or
            username == "" or
            password is None or
-           not isinstance(password, (str, unicode)) or
+           not isinstance(password, (str, bytes)) or
            password == ""):
             reply["message"] = "Username or password missing!"
             self.write(reply)
@@ -23,7 +23,6 @@ class Plugin(abstract_plugin):
 
         # validate user in db:
         success = self.__check_user(username.lower(), password)
-
         # return result:
         if success:
             reply["status"] = 200
@@ -34,8 +33,8 @@ class Plugin(abstract_plugin):
     def __check_user(self, username, password):
         env = lmdb.open('services/account/basic_functionality/userdb')
         with env.begin(write=False, buffers=True) as txn:
-            buf = txn.get(str(username))
-            if str(buf) == str(password):
+            buf = txn.get(username.encode("utf-8"))
+            if bytes(buf).decode("utf-8") == str(password):
                 return True
             else:
                 return False

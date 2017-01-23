@@ -2,10 +2,13 @@
 <div class="panel panel-default">
   <div class="panel-heading">Collection viewer
       <div class="btn-group pull-right">
-        <button class="btn btn-default btn-sm">Edit</button>
+        <button class="btn btn-default btn-sm" onclick="loadRestService('#{{ context["references"]["building/collectionviewer"]["service_name_js"] }}','{{ context["references"]["building/collectioneditor"]["address"] }}')">Edit</button>
       </div>
   </div>
   <div class="panel-body">
+      {% if "message" in context %}
+        {{ context["message"] }}
+      {% end %}
   </div>
 </div>
 {% else %}

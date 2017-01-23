@@ -53,12 +53,12 @@ class Service(abstract_plugin):
                                             isPost=True)
         response = yield future
 
-        if response is None:
+        if response is None or response.body is None:
             context[ref][name]["hasError"] = True
             self.render(htmlPath, context=context)
             return
 
-        response = json.loads(response.body)
+        response = json.loads(response.body.decode("utf-8"))
 
         if response["status"] == 200 and response["username"] == username:
             self.set_secure_cookie("user", username)

@@ -7,7 +7,7 @@ from tornado import gen
 from tornado import httpclient
 from tornado import web
 from tornado import websocket
-import urllib
+from urllib.parse import urlencode
 cl = []
 
 
@@ -88,7 +88,7 @@ class RestHandler(web.RequestHandler):
         return self.get_secure_cookie("user")
 
     def send_external_request(self, address, params, isPost=False):
-        params = urllib.urlencode(params)
+        params = urlencode(params)
 
         # get encoded user token:
         header = {}

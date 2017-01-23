@@ -44,7 +44,7 @@ class Service(abstract_plugin):
         # ----------------------------
         # TEST:
         # Get entity:
-        # curl -X GET -d 'username=USERNAME&entity=UUID' localhost:5557/building/entity  # NOQA
+        # curl -X GET -d 'entity=UUID' localhost:5557/building/entity  # NOQA
         # -----------------------------
         reply = {"status": 400}
 

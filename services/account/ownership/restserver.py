@@ -26,7 +26,7 @@ from service_framework.a_plugin import RestHandler as abstract_plugin  # NOQA
 # expecting a reply...
 
 
-class Plugin(abstract_plugin):
+class Service(abstract_plugin):
 
     def get(self):
         # Check that user is loged in:
@@ -59,20 +59,23 @@ class Plugin(abstract_plugin):
 
         # check if exists:
         rights = self.__get_users_access_rights(username.lower())
+
+        permisions = []
+        
+        reply["status"] = 200
+        reply["username"] = username
+
         if rights is None or rights == "None":
+            reply["permissions"] = permisions
             reply["message"] = "You have no power here, Gandalf the Gay!"
             self.write(reply)
             return
 
-        permisions = []
         for right in json.loads(rights):
             if right["service"] == service:
                 permisions.append(right)
 
-        # return result
-        reply["status"] = 200
-        reply["username"] = username
-        reply["access_rights"] = permisions
+        reply["permissions"] = permisions
         self.write(reply)
 
     def post(self):
@@ -86,7 +89,7 @@ class Plugin(abstract_plugin):
 
         # must have two input parameters:
         username = self.get_argument("username", "")
-        permision = self.get_argument("permision", "")
+        permision = self.get_argument("permisions", "")
 
         # validate input
         if not self.__validate_string_input(username):
@@ -160,13 +163,13 @@ class Plugin(abstract_plugin):
         # send response:
         if success:
             reply["status"] = 200
-            reply["permision"] = permision
+            reply["permisions"] = permision
 
         self.write(reply)
 
     def __validate_string_input(self, param):
         if(param is None or
-           not isinstance(param, (str, unicode)) or
+           not isinstance(param, (str, bytes)) or
            param == "" or param == "None"):
             return False
         return True
@@ -174,7 +177,9 @@ class Plugin(abstract_plugin):
     def __get_users_access_rights(self, username):
         env = lmdb.open('services/account/ownership/ownershipdb')
         with env.begin(write=False, buffers=True) as txn:
-            buf = txn.get(str(username))
+            buf = txn.get(username.encode("utf-8"))
+            if buf is None:
+                return None
             return bytes(buf)
 
     def __store_users_access_rights(self, username, permissions):
@@ -183,7 +188,7 @@ class Plugin(abstract_plugin):
             return txn.put(str(username), json.dumps(permissions))
 
 config = {"service_name": "account/ownership",
-          "handler": Plugin,
+          "handler": Service,
           "service_type": "rest",
           "service_category": "plugin"
           }
